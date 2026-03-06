@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ isCollapsed }) => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const { currentUser, logout } = useAuth();
+    const navigate = useNavigate();
 
     const toggleSidebar = () => setIsMobileOpen(!isMobileOpen);
     const closeSidebar = () => setIsMobileOpen(false);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    const userName = currentUser?.name || 'User';
+    const userInitial = userName.charAt(0).toUpperCase();
+    const userRole = currentUser?.role || 'user';
 
     return (
         <>
@@ -71,15 +83,15 @@ const Sidebar = ({ isCollapsed }) => {
 
                 <div className="sidebar-footer">
                     <div className="user-info">
-                        <div className="user-avatar">S</div>
+                        <div className="user-avatar">{userInitial}</div>
                         {!isCollapsed && (
                             <div className="user-details">
-                                <span className="user-name">Sarah Chen</span>
-                                <span className="user-role">User</span>
+                                <span className="user-name">{userName}</span>
+                                <span className="user-role">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
                             </div>
                         )}
                     </div>
-                    <button className="logout-btn">
+                    <button className="logout-btn" onClick={handleLogout} title="Logout">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
                     </button>
                 </div>
@@ -89,4 +101,3 @@ const Sidebar = ({ isCollapsed }) => {
 };
 
 export default Sidebar;
-

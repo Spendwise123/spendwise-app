@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
@@ -59,7 +59,7 @@ const Login = () => {
             <p className="demo-title">Demo accounts:</p>
             <p className="demo-line">Admin: admin@spendwise.com</p>
             <p className="demo-line">User: sarah@example.com</p>
-            <p className="demo-note">Any password works for demo accounts</p>
+            <p className="demo-note">Password: demo123</p>
           </div>
 
           <button type="submit" className="button" disabled={loading}>
@@ -67,7 +67,7 @@ const Login = () => {
           </button>
 
           <p className="footer">
-            Don't have an account? <a href="#" className="link">Sign up</a>
+            Don't have an account? <Link to="/signup" className="link">Sign up</Link>
           </p>
         </form>
       </div>

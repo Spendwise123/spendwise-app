@@ -1,0 +1,12 @@
+[
+  {
+    "_id": "1772806297254",
+    "userId": "1772806266127",
+    "description": "Lunch",
+    "amount": 150,
+    "category": "Food & Dining",
+    "date": "2026-03-06T14:11:37.255Z",
+    "createdAt": "2026-03-06T14:11:37.255Z",
+    "updatedAt": "2026-03-06T14:11:37.255Z"
+  }
+]

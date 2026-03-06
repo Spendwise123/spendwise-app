@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './Expenses.css';
 import AddExpenseModal from '../components/AddExpenseModal';
+import { useAuth } from '../context/AuthContext';
 
 const Expenses = () => {
+    const { getToken } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All Categories');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +19,9 @@ const Expenses = () => {
     useEffect(() => {
         const fetchExpenses = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/expenses');
+                const response = await fetch('/api/expenses', {
+                    headers: { Authorization: `Bearer ${getToken()}` }
+                });
                 const data = await response.json();
                 setExpenses(data);
             } catch (error) {
@@ -34,10 +38,11 @@ const Expenses = () => {
     // ══════════════════════════════════════════════════════════
     const handleAddExpense = async (newExpense) => {
         try {
-            const response = await fetch('http://localhost:5000/api/expenses', {
+            const response = await fetch('/api/expenses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${getToken()}`
                 },
                 body: JSON.stringify(newExpense),
             });
@@ -56,8 +61,9 @@ const Expenses = () => {
     // ══════════════════════════════════════════════════════════
     const handleDeleteExpense = async (id) => {
         try {
-            await fetch(`http://localhost:5000/api/expenses/${id}`, {
+            await fetch(`/api/expenses/${id}`, {
                 method: 'DELETE',
+                headers: { Authorization: `Bearer ${getToken()}` }
             });
             setExpenses(prev => prev.filter(exp => exp._id !== id));
         } catch (error) {

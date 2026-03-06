@@ -1,5 +1,7 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+
+const API_URL = '/api/auth';
 
 const AuthContext = createContext();
 
@@ -9,64 +11,84 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Demo users for testing
-  const demoUsers = [
-    { email: 'admin@spendwise.com', password: 'demo123', name: 'Admin User', role: 'admin' },
-    { email: 'sarah@example.com', password: 'demo123', name: 'Sarah Johnson', role: 'user' }
-  ];
+  // On mount, check for stored token and restore session
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await fetch(`${API_URL}/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const user = await res.json();
+            setCurrentUser(user);
+          } else {
+            localStorage.removeItem('token');
+          }
+        } catch {
+          localStorage.removeItem('token');
+        }
+      }
+      setLoading(false);
+    };
+    restoreSession();
+  }, []);
 
   // Login function
-  const login = (email, password) => {
-    setLoading(true);
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Check demo accounts (any password works for demo)
-        const user = demoUsers.find(u => u.email === email);
-        if (user) {
-          setCurrentUser(user);
-          resolve(user);
-        } else {
-          reject(new Error('Invalid email or password'));
-        }
-        setLoading(false);
-      }, 1000);
+  const login = async (email, password) => {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
     });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
+
+    localStorage.setItem('token', data.token);
+    setCurrentUser({ id: data.id, name: data.name, email: data.email, role: data.role });
+    return data;
   };
 
   // Signup function
-  const signup = (email, password, name) => {
-    setLoading(true);
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Check if user already exists
-        const existingUser = demoUsers.find(u => u.email === email);
-        if (existingUser) {
-          reject(new Error('Email already exists'));
-        } else {
-          const newUser = { email, name, role: 'user' };
-          setCurrentUser(newUser);
-          resolve(newUser);
-        }
-        setLoading(false);
-      }, 1000);
+  const signup = async (email, password, name) => {
+    const res = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
     });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Signup failed');
+    }
+
+    localStorage.setItem('token', data.token);
+    setCurrentUser({ id: data.id, name: data.name, email: data.email, role: data.role });
+    return data;
   };
 
   // Logout function
   const logout = () => {
+    localStorage.removeItem('token');
     setCurrentUser(null);
   };
+
+  // Helper to get token for API calls
+  const getToken = () => localStorage.getItem('token');
 
   const value = {
     currentUser,
     login,
     signup,
     logout,
-    loading
+    loading,
+    getToken
   };
 
   return (

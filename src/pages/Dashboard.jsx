@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import './Dashboard.css';
 import AddExpenseModal from '../components/AddExpenseModal';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
 import Card from '../components/Card';
 
 const Dashboard = () => {
+    const { getToken } = useAuth();
     // ══════════════════════════════════════════════════════════
     // ARRAY #1: Expenses Array (Array of Objects)
     // Each element is an object with id, date, description, category, amount.
@@ -15,7 +17,9 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchExpenses = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/expenses');
+                const response = await fetch('/api/expenses', {
+                    headers: { Authorization: `Bearer ${getToken()}` }
+                });
                 const data = await response.json();
                 setExpenses(data);
             } catch (error) {
@@ -34,10 +38,11 @@ const Dashboard = () => {
     // ══════════════════════════════════════════════════════════
     const handleAddExpense = async (newExpense) => {
         try {
-            const response = await fetch('http://localhost:5000/api/expenses', {
+            const response = await fetch('/api/expenses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${getToken()}`
                 },
                 body: JSON.stringify(newExpense),
             });
