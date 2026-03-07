@@ -39,13 +39,24 @@ export function AuthProvider({ children }) {
 
   // Login function
   const login = async (email, password) => {
-    const res = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    let res;
+    try {
+      res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+    } catch (err) {
+      throw new Error('Unable to connect to the server. Please make sure the backend is running.');
+    }
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error('Server returned an invalid response. Please make sure the backend server is running on port 5000.');
+    }
+
     if (!res.ok) {
       throw new Error(data.message || 'Login failed');
     }
@@ -57,13 +68,24 @@ export function AuthProvider({ children }) {
 
   // Signup function
   const signup = async (email, password, name) => {
-    const res = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
-    });
+    let res;
+    try {
+      res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+    } catch (err) {
+      throw new Error('Unable to connect to the server. Please make sure the backend is running.');
+    }
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error('Server returned an invalid response. Please make sure the backend server is running on port 5000.');
+    }
+
     if (!res.ok) {
       throw new Error(data.message || 'Signup failed');
     }
