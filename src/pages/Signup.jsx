@@ -1,8 +1,7 @@
-// src/pages/Signup.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './Login.css';
+import './Auth.css';
 
 function Signup() {
   const [name, setName] = useState('');
@@ -25,82 +24,99 @@ function Signup() {
     try {
       setError('');
       setLoading(true);
-      await signup(email, password, name);
+      
+      // Split name into first and last name for Django
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      await signup(email, password, firstName, lastName);
       navigate('/dashboard');
-    } catch (error) {
-      setError('Failed to create account');
+    } catch (err) {
+      setError(err.message || 'Failed to create account');
     }
     setLoading(false);
   }
 
   return (
-    <div className="container">
-      <div className="form">
-        <h1 className="title">SpendWise</h1>
-        <p className="subtitle">Create your account</p>
+    <div className="auth-container">
+      <div className="auth-bg-blob blob-1"></div>
+      <div className="auth-bg-blob blob-2"></div>
 
-        {error && <div className="error">{error}</div>}
-
-        <div className="field">
-          <label className="label">Full Name</label>
-          <input 
-            type="text" 
-            className="input"
-            placeholder="John Doe"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <h1 className="auth-title">Create Account</h1>
+          <p className="auth-subtitle">Join thousands spending smarter</p>
         </div>
 
-        <div className="field">
-          <label className="label">Email</label>
-          <input 
-            type="email" 
-            className="input"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label className="auth-label">Full Name</label>
+            <input 
+              type="text" 
+              className="auth-input"
+              placeholder="John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-label">Email Address</label>
+            <input 
+              type="email" 
+              className="auth-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-label">Password</label>
+            <input 
+              type="password" 
+              className="auth-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-label">Confirm Password</label>
+            <input 
+              type="password" 
+              className="auth-input"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Sign Up'}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
         </div>
-
-        <div className="field">
-          <label className="label">Password</label>
-          <input 
-            type="password" 
-            className="input"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label className="label">Confirm Password</label>
-          <input 
-            type="password" 
-            className="input"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          className="button"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? 'Creating account...' : 'Sign Up'}
-        </button>
-
-        <p className="footer">
-          Already have an account? <Link to="/login" className="link">Sign in</Link>
-        </p>
       </div>
     </div>
   );
