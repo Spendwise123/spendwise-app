@@ -7,10 +7,27 @@ from .serializers import RegisterSerializer, UserSerializer, ChangePasswordSeria
 
 User = get_user_model()
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'id': user.id,
+            'name': f"{user.first_name} {user.last_name}".strip() or user.email.split('@')[0],
+            'email': user.email,
+            'role': 'user',
+            'token': str(refresh.access_token)
+        }, status=status.HTTP_201_CREATED)
 
 class LoginView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
