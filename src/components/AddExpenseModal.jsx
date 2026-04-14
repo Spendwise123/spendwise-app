@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import './AddExpenseModal.css';
+import { CATEGORIES } from '../constants/categories';
 
 const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         amount: '',
         category: '',
@@ -14,21 +16,26 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.amount || !formData.category || !formData.description || !formData.date) return;
 
-        onAdd({
-            ...formData,
-            amount: parseFloat(formData.amount)
-        });
+        setIsSubmitting(true);
+        try {
+            await onAdd({
+                ...formData,
+                amount: parseFloat(formData.amount)
+            });
 
-        setFormData({
-            amount: '',
-            category: '',
-            description: '',
-            date: new Date().toISOString().split('T')[0],
-        });
+            setFormData({
+                amount: '',
+                category: '',
+                description: '',
+                date: new Date().toISOString().split('T')[0],
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -55,21 +62,24 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                             step="0.01"
                             autoFocus
                             required
+                            disabled={isSubmitting}
                             value={formData.amount}
                             onChange={handleInputChange}
                         />
                     </div>
                     <div className="form-group">
                         <label>Category</label>
-                        <select name="category" required value={formData.category} onChange={handleInputChange} >
+                        <select 
+                            name="category" 
+                            required 
+                            disabled={isSubmitting}
+                            value={formData.category} 
+                            onChange={handleInputChange} 
+                        >
                             <option value="" disabled>Select category</option>
-                            <option value="Food & Dining">Food & Dining</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Health">Health</option>
-                            <option value="Education">Education</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Utilities">Utilities</option>
+                            {CATEGORIES.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="form-group">
@@ -79,6 +89,7 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                             name="description"
                             placeholder="What did you spend on?"
                             required
+                            disabled={isSubmitting}
                             value={formData.description}
                             onChange={handleInputChange}
                         />
@@ -89,13 +100,18 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                             type="date"
                             name="date"
                             required
+                            disabled={isSubmitting}
                             value={formData.date}
                             onChange={handleInputChange}
                         />
                     </div>
                     <div className="form-actions">
-                        <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
-                        <button type="submit" className="submit-btn">Add Expense</button>
+                        <button type="button" className="cancel-btn" onClick={onClose} disabled={isSubmitting}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                            {isSubmitting ? 'Adding...' : 'Add Expense'}
+                        </button>
                     </div>
                 </form>
             </div>
