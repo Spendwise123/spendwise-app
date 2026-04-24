@@ -1,11 +1,12 @@
-from rest_framework import viewsets, permissions
-from rest_framework.decorators import action
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Sum, Count
 from django.utils import timezone
 from .models import Transaction
 from .serializers import TransactionSerializer
 import datetime
+from django.http import JsonResponse
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
@@ -56,3 +57,45 @@ class TransactionViewSet(viewsets.ModelViewSet):
             'trajectory': trajectory,
             'count': transactions.count()
         })
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def services_list(request):
+    services = [
+        {
+            "id": 1,
+            "name": "Investment Advisory",
+            "category": "Wealth Management",
+            "description": "Professional guidance on stock market investments and portfolio diversification.",
+            "price": "2500.00"
+        },
+        {
+            "id": 2,
+            "name": "Tax Planning",
+            "category": "Accounting",
+            "description": "Strategic tax optimization to minimize liabilities and maximize returns.",
+            "price": "1500.00"
+        },
+        {
+            "id": 3,
+            "name": "Debt Consolidation",
+            "category": "Financial Health",
+            "description": "Expert advice on managing and merging high-interest loans into manageable payments.",
+            "price": "1200.00"
+        },
+        {
+            "id": 4,
+            "name": "Retirement Planning",
+            "category": "Wealth Management",
+            "description": "Long-term strategy for building a secure nest egg and passive income streams.",
+            "price": "3000.00"
+        },
+        {
+            "id": 5,
+            "name": "Budget Optimization",
+            "category": "Personal Finance",
+            "description": "Personalized spending audit to identify savings opportunities and improve cash flow.",
+            "price": "500.00"
+        }
+    ]
+    return JsonResponse({"status": "success", "data": services})
