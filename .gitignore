@@ -103,3 +103,9 @@ expo-env.d.ts
 
 # Legacy Cleanup
 server_legacy/
+
+
+#misc
+
+testing_guide.md
+walkthrough.md
