@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AddExpenseModal.css';
 import { CATEGORIES } from '../constants/categories';
 
-const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
+const AddExpenseModal = ({ isOpen, onClose, onAdd, editingExpense = null }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         amount: '',
@@ -10,6 +10,25 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
         description: '',
         date: new Date().toISOString().split('T')[0],
     });
+
+    // Pre-fill form when editing
+    useEffect(() => {
+        if (editingExpense) {
+            setFormData({
+                amount: editingExpense.amount?.toString() || '',
+                category: editingExpense.category || '',
+                description: editingExpense.description || '',
+                date: editingExpense.date || new Date().toISOString().split('T')[0],
+            });
+        } else {
+            setFormData({
+                amount: '',
+                category: '',
+                description: '',
+                date: new Date().toISOString().split('T')[0],
+            });
+        }
+    }, [editingExpense, isOpen]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -40,13 +59,15 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
 
     if (!isOpen) return null;
 
+    const isEditing = !!editingExpense;
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <div className="modal-header-text">
-                        <h2>Add New Expense</h2>
-                        <p>Log a new expense to track your spending</p>
+                        <h2>{isEditing ? 'Edit Expense' : 'Add New Expense'}</h2>
+                        <p>{isEditing ? 'Update the expense details below' : 'Log a new expense to track your spending'}</p>
                     </div>
                     <button className="close-modal" onClick={onClose}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
@@ -110,7 +131,10 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                             Cancel
                         </button>
                         <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                            {isSubmitting ? 'Adding...' : 'Add Expense'}
+                            {isSubmitting
+                                ? (isEditing ? 'Saving...' : 'Adding...')
+                                : (isEditing ? 'Save Changes' : 'Add Expense')
+                            }
                         </button>
                     </div>
                 </form>

@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import './Expenses.css';
 import AddExpenseModal from '../components/AddExpenseModal';
 import { useAuth } from '../context/AuthContext';
-import { getExpenses, addExpense, deleteExpense } from '../data/mockApi';
+import { getExpenses, addExpense, deleteExpense, updateExpense } from '../data/mockApi';
 import { CATEGORIES } from '../constants/categories';
+import useToast from '../components/Toast';
 
 const Expenses = () => {
     const { getToken } = useAuth();
+    const { addToast, ToastContainer } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All Categories');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [editingExpense, setEditingExpense] = useState(null);
 
     const [expenses, setExpenses] = useState([]);
 
@@ -22,6 +25,11 @@ const Expenses = () => {
                 setExpenses(data);
             } catch (error) {
                 console.error('Error fetching expenses:', error);
+                if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+                    addToast('Session expired. Please login again.', 'warning');
+                } else {
+                    addToast('Failed to load expenses.', 'error');
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -34,9 +42,27 @@ const Expenses = () => {
             const data = await addExpense(newExpense);
             setExpenses(prev => [data, ...prev]);
             setIsModalOpen(false);
+            addToast('Expense added successfully!', 'success');
         } catch (error) {
             console.error('Error adding expense:', error);
-            alert('Failed to add expense.');
+            addToast('Failed to add expense. Please try again.', 'error');
+        }
+    };
+
+    const handleUpdateExpense = async (updatedData) => {
+        if (!editingExpense) return;
+        const id = editingExpense.id || editingExpense._id;
+        try {
+            const data = await updateExpense(id, updatedData);
+            setExpenses(prev => prev.map(exp =>
+                (exp.id || exp._id) === id ? data : exp
+            ));
+            setEditingExpense(null);
+            setIsModalOpen(false);
+            addToast('Expense updated successfully!', 'success');
+        } catch (error) {
+            console.error('Error updating expense:', error);
+            addToast('Failed to update expense. Please try again.', 'error');
         }
     };
 
@@ -44,10 +70,26 @@ const Expenses = () => {
         try {
             await deleteExpense(id);
             setExpenses(prev => prev.filter(exp => (exp.id || exp._id) !== id));
+            addToast('Expense deleted successfully!', 'success');
         } catch (error) {
             console.error('Error deleting expense:', error);
-            alert('Failed to delete expense.');
+            addToast('Failed to delete expense.', 'error');
         }
+    };
+
+    const openEditModal = (expense) => {
+        setEditingExpense(expense);
+        setIsModalOpen(true);
+    };
+
+    const openAddModal = () => {
+        setEditingExpense(null);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingExpense(null);
     };
 
     const filteredExpenses = expenses.filter(exp => {
@@ -69,12 +111,13 @@ const Expenses = () => {
 
     return (
         <div className="expenses-container">
+            <ToastContainer />
             <header className="page-header">
                 <div className="header-left">
                     <h1>Expenses</h1>
                     <p>Manage and track all your expenses</p>
                 </div>
-                <button className="add-expense-btn" onClick={() => setIsModalOpen(true)}>
+                <button className="add-expense-btn" onClick={openAddModal}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
                     Add Expense
                 </button>
@@ -149,7 +192,10 @@ const Expenses = () => {
                                         <td><span className="category-pill">{exp.category}</span></td>
                                         <td className="amount">₱{exp.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         <td className="actions">
-                                            <button className="delete-btn" onClick={() => handleDeleteExpense(exp.id || exp._id)}>
+                                            <button className="edit-btn" onClick={() => openEditModal(exp)} title="Edit expense">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                            </button>
+                                            <button className="delete-btn" onClick={() => handleDeleteExpense(exp.id || exp._id)} title="Delete expense">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                                             </button>
                                         </td>
@@ -160,11 +206,12 @@ const Expenses = () => {
                     </table>
                 </div>
             </div>
-            {/* Shared Modal Component */}
+            {/* Shared Modal Component — supports both Add and Edit */}
             <AddExpenseModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onAdd={handleAddExpense}
+                onClose={closeModal}
+                onAdd={editingExpense ? handleUpdateExpense : handleAddExpense}
+                editingExpense={editingExpense}
             />
         </div>
     );

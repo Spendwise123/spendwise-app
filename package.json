@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "backend": "python backend/manage.py runserver 5000",
+    "backend": ".venv\\Scripts\\python backend\\manage.py runserver 5000",
     "frontend": "vite",
     "build": "vite build",
     "lint": "eslint .",

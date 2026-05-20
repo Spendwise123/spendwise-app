@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import './Predictions.css';
-import { getSummary } from '../data/mockApi';
+import { getSummary, getBudgets } from '../data/mockApi';
 
 // Simple Linear Regression simulation
 const calculatePrediction = (actualData) => {
@@ -25,12 +25,21 @@ const calculatePrediction = (actualData) => {
 
 const Predictions = () => {
     const [summary, setSummary] = useState({ trajectory: [] });
+    const [budgetLimit, setBudgetLimit] = useState(2000.00);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await getSummary();
-                setSummary(data);
+                const [summaryData, budgetData] = await Promise.all([
+                    getSummary(),
+                    getBudgets()
+                ]);
+                setSummary(summaryData);
+                
+                const totalBudget = budgetData.find(b => b.category === 'Total' && b.period === 'monthly');
+                if (totalBudget) {
+                    setBudgetLimit(parseFloat(totalBudget.limit));
+                }
             } catch (error) {
                 console.error('Error fetching prediction data:', error);
             }
@@ -55,7 +64,7 @@ const Predictions = () => {
 
         const predictedTotal = data[29].predicted;
         const lastActual = actuals.length > 0 ? actuals[actuals.length - 1].val : 0;
-        const budget = 2000;
+        const budget = budgetLimit;
         const overBudget = Math.max(0, predictedTotal - budget);
         const daysRemaining = 30 - actuals.length;
         const dailyLimit = overBudget > 0 ? 0 : (budget - lastActual) / daysRemaining;
@@ -70,7 +79,7 @@ const Predictions = () => {
                 confidence: 98.4
             }
         };
-    }, [summary.trajectory]);
+    }, [summary.trajectory, budgetLimit]);
 
     const [hoveredPoint, setHoveredPoint] = useState(null);
     const chartRef = useRef(null);
@@ -80,8 +89,8 @@ const Predictions = () => {
     const w = 900, h = 280;
     const iW = w - pad.left - pad.right;
     const iH = h - pad.top - pad.bottom;
-    const maxY = 2400;
-    const budgetY = 2000;
+    const maxY = Math.max(2400, budgetLimit * 1.2);
+    const budgetY = budgetLimit;
 
     const tx = (day) => pad.left + ((day - 1) / 29) * iW;
     const ty = (val) => pad.top + iH - (val / maxY) * iH;
@@ -104,6 +113,11 @@ const Predictions = () => {
         else setHoveredPoint(null);
     };
 
+    const isOver = stats.predictedTotal > budgetLimit;
+    const predictedPercent = budgetLimit > 0 ? Math.round((stats.predictedTotal / budgetLimit) * 100) : 0;
+    const strokeDashoffset = 188.5 - (Math.min(1, stats.predictedTotal / budgetLimit) * 188.5);
+    const yTicks = [0, Math.round(maxY * 0.25), Math.round(maxY * 0.5), Math.round(maxY * 0.75), Math.round(maxY)];
+
     return (
         <div className="predictions-container">
             <header className="page-header">
@@ -113,16 +127,25 @@ const Predictions = () => {
                 </div>
             </header>
 
-            <div className="alert-banner risk full-width">
+            <div className={`alert-banner ${isOver ? 'risk' : 'success'} full-width`}>
                 <div className="alert-icon-container">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                    {isOver ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                    ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                    )}
                 </div>
                 <div className="alert-content">
                     <div className="alert-title">
-                        High Risk of Overspending
-                        <span className="badge danger">High Risk</span>
+                        {isOver ? 'High Risk of Overspending' : 'Spending is On Track'}
+                        <span className={`badge ${isOver ? 'danger' : 'success'}`}>{isOver ? 'High Risk' : 'Safe'}</span>
                     </div>
-                    <p className="alert-desc">At the current rate, you're projected to exceed your budget by ₱{stats.overBudget.toFixed(2)}. Immediate action is recommended to reduce spending.</p>
+                    <p className="alert-desc">
+                        {isOver 
+                            ? `At the current rate, you're projected to exceed your budget by ₱${stats.overBudget.toFixed(2)}. Immediate action is recommended to reduce spending.`
+                            : `At the current rate, your spending is projected to stay within your monthly limit.`
+                        }
+                    </p>
                 </div>
             </div>
 
@@ -132,8 +155,8 @@ const Predictions = () => {
                         <div className="gauge-container">
                             <svg viewBox="0 0 100 100" className="gauge">
                                 <path d="M 20 80 A 40 40 0 1 1 80 80" fill="none" stroke="#1f1f23" strokeWidth="8" strokeLinecap="round" />
-                                <path d="M 20 80 A 40 40 0 1 1 80 80" fill="none" stroke="var(--danger)" strokeWidth="8" strokeLinecap="round" strokeDasharray="188.5" strokeDashoffset="0" />
-                                <text x="50" y="45" className="gauge-percent">100%</text>
+                                <path d="M 20 80 A 40 40 0 1 1 80 80" fill="none" stroke={isOver ? 'var(--danger)' : 'var(--primary)'} strokeWidth="8" strokeLinecap="round" strokeDasharray="188.5" strokeDashoffset={strokeDashoffset} />
+                                <text x="50" y="45" className="gauge-percent">{predictedPercent}%</text>
                                 <text x="50" y="60" className="gauge-label">of budget</text>
                             </svg>
                         </div>
@@ -144,7 +167,9 @@ const Predictions = () => {
                     <div className="stat-content">
                         <p className="stat-label">Predicted Total</p>
                         <h2 className="stat-value">₱{stats.predictedTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-                        <p className="stat-subtext danger">₱{stats.overBudget.toFixed(2)} over budget</p>
+                        <p className={`stat-subtext ${isOver ? 'danger' : 'success'}`}>
+                            {isOver ? `₱${stats.overBudget.toFixed(2)} over budget` : 'Under budget'}
+                        </p>
                     </div>
                     <div className="stat-icon-top">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 20-4-4h-3l2-2h3l2-2h-3l2-2h-3l2-2" /></svg>
@@ -190,10 +215,10 @@ const Predictions = () => {
                         onMouseLeave={() => setHoveredPoint(null)}
                     >
                         {/* Grid lines */}
-                        {[0, 600, 1200, 1800, 2400].map(v => (
+                        {yTicks.map(v => (
                             <g key={v}>
                                 <line x1={pad.left} y1={ty(v)} x2={w - pad.right} y2={ty(v)} stroke="#1f1f23" strokeWidth="1" strokeDasharray="3 3" />
-                                <text x={pad.left - 12} y={ty(v) + 4} textAnchor="end" fill="#71717a" fontSize="11">₱{v}</text>
+                                <text x={pad.left - 12} y={ty(v) + 4} textAnchor="end" fill="#71717a" fontSize="11">₱{v.toLocaleString()}</text>
                             </g>
                         ))}
 

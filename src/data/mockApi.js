@@ -66,6 +66,29 @@ export const deleteExpense = async (id) => {
     }
 };
 
+export const updateExpense = async (id, expense) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${id}/`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                ...expense,
+                type: 'expense',
+                date: expense.date || new Date().toISOString().split('T')[0]
+            })
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to update expense');
+        }
+        const data = await response.json();
+        return mapResponse(data);
+    } catch (error) {
+        console.error('API Error (updateExpense):', error);
+        throw error;
+    }
+};
+
 export const getSummary = async () => {
     try {
         const response = await fetch(`${API_BASE_URL}/summary/`, {
@@ -73,9 +96,55 @@ export const getSummary = async () => {
         });
         if (!response.ok) throw new Error('Failed to fetch summary');
         const data = await response.json();
-        return data; // Summary structure is custom, no need for mapResponse
+        return data;
     } catch (error) {
         console.error('API Error (getSummary):', error);
+        throw error;
+    }
+};
+
+export const getBudgets = async () => {
+    try {
+        const response = await fetch('/api/budgets/', {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch budgets');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('API Error (getBudgets):', error);
+        throw error;
+    }
+};
+
+export const createBudget = async (budget) => {
+    try {
+        const response = await fetch('/api/budgets/', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(budget)
+        });
+        if (!response.ok) throw new Error('Failed to create budget');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('API Error (createBudget):', error);
+        throw error;
+    }
+};
+
+export const updateBudget = async (id, budget) => {
+    try {
+        const response = await fetch(`/api/budgets/${id}/`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(budget)
+        });
+        if (!response.ok) throw new Error('Failed to update budget');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('API Error (updateBudget):', error);
         throw error;
     }
 };

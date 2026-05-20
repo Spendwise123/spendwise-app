@@ -1,14 +1,17 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import './Dashboard.css';
 import AddExpenseModal from '../components/AddExpenseModal';
+import EditBudgetModal from '../components/EditBudgetModal';
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/Card';
-import { getExpenses, addExpense, getSummary } from '../data/mockApi';
+import { getExpenses, addExpense, getSummary, getBudgets, createBudget, updateBudget } from '../data/mockApi';
 import { CATEGORIES } from '../constants/categories';
+import useToast from '../components/Toast';
 
 const Dashboard = () => {
     const { getToken } = useAuth();
+    const { addToast, ToastContainer } = useToast();
     // ══════════════════════════════════════════════════════════
     // ARRAY #1: Expenses Array (Array of Objects)
     // Each element is an object with id, date, description, category, amount.
@@ -23,17 +26,27 @@ const Dashboard = () => {
     });
 
     const [isLoading, setIsLoading] = useState(true);
+    const [budgetObj, setBudgetObj] = useState(null);
+    const [budgetLimit, setBudgetLimit] = useState(2000.00);
+    const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [expenseData, summaryData] = await Promise.all([
+                const [expenseData, summaryData, budgetData] = await Promise.all([
                     getExpenses(),
-                    getSummary()
+                    getSummary(),
+                    getBudgets()
                 ]);
                 setExpenses(expenseData);
                 setSummary(summaryData);
+                
+                const totalBudget = budgetData.find(b => b.category === 'Total' && b.period === 'monthly');
+                if (totalBudget) {
+                    setBudgetObj(totalBudget);
+                    setBudgetLimit(parseFloat(totalBudget.limit));
+                }
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
             } finally {
@@ -58,8 +71,37 @@ const Dashboard = () => {
             const newSummary = await getSummary();
             setSummary(newSummary);
             setIsModalOpen(false);
+            addToast('Expense added successfully!', 'success');
         } catch (error) {
             console.error('Error adding expense:', error);
+            addToast('Failed to add expense. Please try again.', 'error');
+        }
+    };
+
+    const handleSaveBudget = async (newLimit) => {
+        try {
+            if (budgetObj) {
+                const updated = await updateBudget(budgetObj.id, {
+                    category: 'Total',
+                    limit: newLimit,
+                    period: 'monthly'
+                });
+                setBudgetObj(updated);
+                setBudgetLimit(parseFloat(updated.limit));
+            } else {
+                const created = await createBudget({
+                    category: 'Total',
+                    limit: newLimit,
+                    period: 'monthly'
+                });
+                setBudgetObj(created);
+                setBudgetLimit(parseFloat(created.limit));
+            }
+            addToast('Monthly budget updated successfully!', 'success');
+        } catch (error) {
+            console.error('Error updating budget:', error);
+            addToast('Failed to update monthly budget.', 'error');
+            throw error;
         }
     };
 
@@ -83,10 +125,23 @@ const Dashboard = () => {
     // an array and use .map() to render them dynamically.
     // ══════════════════════════════════════════════════════════
     const summaryStats = [
-        { label: 'Monthly Budget', value: '₱2,000.00' },
+        { 
+            label: 'Monthly Budget', 
+            value: (
+                <div className="budget-value-container">
+                    <span>₱{budgetLimit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <button className="edit-budget-inline-btn" onClick={() => setIsBudgetModalOpen(true)} title="Edit Budget">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                    </button>
+                </div>
+            )
+        },
         { label: 'Current Spending', value: `₱${totalSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         { label: 'Total Expenses', value: summary.count },
-        { label: 'Over Budget', value: `₱${Math.max(0, totalSpending - 2000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+        { label: 'Over Budget', value: `₱${Math.max(0, totalSpending - budgetLimit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
     ];
 
     // ── Trajectory Chart data & state ──
@@ -105,6 +160,15 @@ const Dashboard = () => {
 
     const [hoveredPoint, setHoveredPoint] = useState(null);
     const trajRef = useRef(null);
+
+    const predictedTotal = useMemo(() => {
+        if (!trajectoryData.length) return totalSpending;
+        return trajectoryData[trajectoryData.length - 1]?.predicted ?? totalSpending;
+    }, [trajectoryData, totalSpending]);
+
+    const gaugePercent = budgetLimit > 0 ? Math.round((predictedTotal / budgetLimit) * 100) : 0;
+    const strokeDashoffset = 188.5 - (Math.min(1, predictedTotal / budgetLimit) * 188.5);
+    const isOver = predictedTotal > budgetLimit;
 
     // ══════════════════════════════════════════════════════════
     // ARRAY #5: Category Chart Data (Array of Objects)
@@ -173,6 +237,7 @@ const Dashboard = () => {
 
     return (
         <div className="dashboard-container">
+            <ToastContainer />
             <header className="page-header">
                 <div className="header-left">
                     <h1>Budget Dashboard</h1>
@@ -201,18 +266,20 @@ const Dashboard = () => {
                                     <path
                                         d="M 20 80 A 40 40 0 1 1 80 80"
                                         fill="none"
-                                        stroke="var(--danger)"
+                                        stroke={isOver ? 'var(--danger)' : 'var(--primary)'}
                                         strokeWidth="8"
                                         strokeLinecap="round"
                                         strokeDasharray="188.5"
-                                        strokeDashoffset="0"
+                                        strokeDashoffset={strokeDashoffset}
                                     />
-                                    <text x="50" y="45" className="gauge-percent">100%</text>
+                                    <text x="50" y="45" className="gauge-percent">{gaugePercent}%</text>
                                     <text x="50" y="60" className="gauge-label">of budget</text>
                                 </svg>
                             </div>
                             <p className="gauge-subtext">Predicted vs Budget</p>
-                            <span className="badge danger">High Risk</span>
+                            <span className={`badge ${isOver ? 'danger' : 'success'}`}>
+                                {isOver ? 'High Risk' : 'On Track'}
+                            </span>
                         </div>
                     </Card>
 
@@ -361,6 +428,13 @@ const Dashboard = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onAdd={handleAddExpense}
+            />
+
+            <EditBudgetModal
+                isOpen={isBudgetModalOpen}
+                onClose={() => setIsBudgetModalOpen(false)}
+                onSave={handleSaveBudget}
+                currentBudget={budgetLimit}
             />
         </div>
     );

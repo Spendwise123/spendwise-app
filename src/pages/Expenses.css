@@ -99,6 +99,7 @@
     text-align: right;
 }
 
+.edit-btn,
 .delete-btn {
     background: none;
     border: none;
@@ -109,9 +110,20 @@
     transition: all 0.2s;
 }
 
+.edit-btn:hover {
+    color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
 .delete-btn:hover {
     color: var(--danger);
     background-color: var(--danger-glow);
+}
+
+.actions {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
 }
 
 .sort-icon {

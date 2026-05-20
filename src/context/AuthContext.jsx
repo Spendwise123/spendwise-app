@@ -9,6 +9,23 @@ export function useAuth() {
 
 const API_BASE_URL = '/api/auth';
 
+const extractErrorMessage = (data, defaultMessage) => {
+  if (!data) return defaultMessage;
+  if (typeof data === 'string') return data;
+  if (data.message) return data.message;
+  if (data.detail) return data.detail;
+  
+  if (typeof data === 'object') {
+    const errorStrings = Object.entries(data).map(([key, val]) => {
+      const fieldName = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
+      const valStr = Array.isArray(val) ? val.join(' ') : String(val);
+      return `${fieldName}: ${valStr}`;
+    });
+    if (errorStrings.length > 0) return errorStrings.join('; ');
+  }
+  return defaultMessage;
+};
+
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +53,7 @@ export function AuthProvider({ children }) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || data.detail || 'Login failed');
+      throw new Error(extractErrorMessage(data, 'Login failed'));
     }
 
     // Django response matches Express format: { id, name, email, role, token }
@@ -57,7 +74,7 @@ export function AuthProvider({ children }) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || data.detail || 'Signup failed');
+      throw new Error(extractErrorMessage(data, 'Signup failed'));
     }
 
     const { token, ...user } = data;
