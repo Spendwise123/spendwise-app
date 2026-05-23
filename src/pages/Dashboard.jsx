@@ -414,7 +414,7 @@ const Dashboard = () => {
                                         <td>{new Date(expense.date).toLocaleDateString()}</td>
                                         <td>{expense.description}</td>
                                         <td><span className="category-pill">{expense.category}</span></td>
-                                        <td className="amount">₱{expense.amount.toFixed(2)}</td>
+                                        <td className="amount">₱{Number(expense.amount || 0).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
