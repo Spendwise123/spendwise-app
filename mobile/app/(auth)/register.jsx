@@ -93,10 +93,10 @@ export default function RegisterScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Confirm Password</Text>
+                        <Text style={styles.label}>Retype Password</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Confirm your password"
+                            placeholder="Retype your password"
                             placeholderTextColor={COLORS.textMuted}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}

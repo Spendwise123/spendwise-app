@@ -35,22 +35,38 @@
     padding: 1.5rem;
     border-radius: 12px;
     margin-bottom: 2rem;
+}
+
+.alert-banner.risk {
     background-color: rgba(69, 10, 10, 0.4);
-    /* Dark red background */
     border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-banner.success {
+    background-color: rgba(5, 46, 22, 0.4);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.alert-banner.risk .alert-icon-container {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-banner.success .alert-icon-container {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .alert-icon-container {
     width: 44px;
     height: 44px;
-    background-color: rgba(239, 68, 68, 0.15);
-    color: var(--danger);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .alert-content {
@@ -82,6 +98,11 @@
 
 .badge.danger {
     background-color: var(--danger);
+    color: #ffffff;
+}
+
+.badge.success {
+    background-color: #22c55e;
     color: #ffffff;
 }
 
@@ -157,6 +178,10 @@
 
 .stat-subtext.danger {
     color: var(--danger);
+}
+
+.stat-subtext.success {
+    color: #22c55e;
 }
 
 .stat-icon-top {

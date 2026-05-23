@@ -111,6 +111,7 @@ const Dashboard = () => {
     // adds up the 'amount' field to get the total spending.
     // ══════════════════════════════════════════════════════════
     const totalSpending = summary.total_spending;
+    const isOverBudget = totalSpending > budgetLimit;
 
     // ══════════════════════════════════════════════════════════
     // ARRAY #2: Categories Array (Simple String Array)
@@ -139,9 +140,9 @@ const Dashboard = () => {
                 </div>
             )
         },
-        { label: 'Current Spending', value: `₱${totalSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+        { label: 'Current Spending', value: `₱${totalSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, colorClass: isOverBudget ? 'value-danger' : 'value-success' },
         { label: 'Total Expenses', value: summary.count },
-        { label: 'Over Budget', value: `₱${Math.max(0, totalSpending - budgetLimit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+        { label: 'Over Budget', value: `₱${Math.max(0, totalSpending - budgetLimit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, colorClass: isOverBudget ? 'value-danger' : 'value-success' },
     ];
 
     // ── Trajectory Chart data & state ──
@@ -286,10 +287,10 @@ const Dashboard = () => {
                     {/* ══ ARRAY .map() — Renders stat cards dynamically from summaryStats array ══ */}
                     <div className="summary-stats">
                         {summaryStats.map((stat, index) => (
-                            <Card className="stat-card" key={index}>
+                            <Card className={`stat-card${stat.colorClass ? ` stat-card--${stat.colorClass}` : ''}`} key={index}>
                                 <div className="stat-content">
                                     <p className="stat-label">{stat.label}</p>
-                                    <h2 className="stat-value">{stat.value}</h2>
+                                    <h2 className={`stat-value${stat.colorClass ? ` ${stat.colorClass}` : ''}`}>{stat.value}</h2>
                                 </div>
                             </Card>
                         ))}

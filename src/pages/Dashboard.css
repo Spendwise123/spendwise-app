@@ -265,6 +265,27 @@
     font-weight: 600;
 }
 
+/* Budget status colors */
+.value-success {
+    color: var(--primary) !important;
+    transition: color 0.3s ease;
+}
+
+.value-danger {
+    color: var(--danger) !important;
+    transition: color 0.3s ease;
+}
+
+.stat-card--value-success {
+    border-color: rgba(16, 185, 129, 0.25);
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1);
+}
+
+.stat-card--value-danger {
+    border-color: rgba(239, 68, 68, 0.25);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+}
+
 
 @media (max-width: 1024px) {
     .top-row-grid {

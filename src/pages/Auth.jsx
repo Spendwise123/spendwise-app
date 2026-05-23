@@ -11,7 +11,7 @@ const ScrambleText = ({ text }) => {
   useEffect(() => {
     let frame = 0;
     const totalFrames = 30;
-    const interval = 25; 
+    const interval = 25;
 
     const timer = setInterval(() => {
       frame++;
@@ -115,7 +115,7 @@ const Auth = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
-    
+
     if (!loginEmail || !validateEmail(loginEmail)) {
       setLoginError('Please enter a valid email address.');
       return;
@@ -322,7 +322,7 @@ const Auth = () => {
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
                       />
-                      <button 
+                      <button
                         type="button"
                         className="auth-field__toggle"
                         onClick={() => setShowLoginPass(!showLoginPass)}
@@ -430,7 +430,7 @@ const Auth = () => {
                           onChange={(e) => setSignupPassword(e.target.value)}
                           required
                         />
-                        <button 
+                        <button
                           type="button"
                           className="auth-field__toggle"
                           onClick={() => setShowSignupPass(!showSignupPass)}
@@ -444,7 +444,7 @@ const Auth = () => {
                           )}
                         </button>
                       </div>
-                      
+
                       {/* Strength Meter */}
                       <div className="auth-strength">
                         <div className={`auth-strength__bar ${signupPassword ? `auth-strength__bar--level-${signupStrength}` : ''}`} />
@@ -459,7 +459,7 @@ const Auth = () => {
                     </div>
 
                     <div className={`auth-field ${confirmPassword && (confirmPassword === signupPassword ? 'auth-field--valid' : 'auth-field--invalid')}`}>
-                      <label htmlFor="signup-confirm" className="auth-field__label">Confirm</label>
+                      <label htmlFor="signup-confirm" className="auth-field__label">Re-type Password</label>
                       <div className="auth-field__wrap">
                         <span className="auth-field__icon">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -475,7 +475,7 @@ const Auth = () => {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
                         />
-                        <button 
+                        <button
                           type="button"
                           className="auth-field__toggle"
                           onClick={() => setShowConfirmPass(!showConfirmPass)}
